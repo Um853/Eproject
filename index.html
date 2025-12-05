@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HotelBook — E‑commerce Hotel Booking</title>
+  <style>
+    /* Basic reset */
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --primary:#b22222; /* dark red theme */
+      --muted:#f4f4f6;
+      --card:#ffffff;
+      --glass: rgba(255,255,255,0.7);
+      --radius:12px;
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    body{background:linear-gradient(135deg,#2b0a0a 0%, #541212 60%);color:#111;min-height:100vh}
+    .container{max-width:1100px;margin:28px auto;padding:20px}
+
+    header{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,rgba(255,255,255,0.06), rgba(255,255,255,0.02));padding:14px;border-radius:14px;color:#fff}
+    header h1{font-size:20px;letter-spacing:0.6px}
+    header .actions{display:flex;gap:10px;align-items:center}
+    .btn{background:var(--primary);color:#fff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.12)}
+
+    /* Search bar */
+    .search-panel{display:flex;gap:12px;align-items:center;padding:14px;margin-top:18px;background:var(--glass);border-radius:12px}
+    .search-panel input, .search-panel select{padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.08);min-width:0}
+    .search-panel input[type=date]{padding:8px}
+
+    /* Grid */
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:18px;margin-top:18px}
+    .list{background:var(--card);padding:16px;border-radius:12px}
+    .card{display:flex;gap:14px;padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);align-items:center;margin-bottom:12px}
+    .thumb{width:120px;height:90px;border-radius:8px;flex-shrink:0;background-size:cover;background-position:center}
+    .meta{flex:1}
+    .meta h3{font-size:16px;margin-bottom:6px}
+    .meta p{font-size:13px;color:#555}
+    .meta .price{font-weight:700;color:var(--primary);margin-top:8px}
+    .card .book{margin-left:auto}
+
+    /* Right column cart */
+    .cart{background:var(--card);padding:16px;border-radius:12px;position:sticky;top:28px;height:max-content}
+    .cart h4{margin-bottom:8px}
+    .cart .item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(0,0,0,0.06)}
+    .cart .total{font-weight:800;margin-top:12px}
+
+    footer{margin-top:22px;color:#ddd;text-align:center}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,2,2,0.45);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal{background:var(--card);width:100%;max-width:720px;border-radius:14px;padding:18px}
+    .row{display:flex;gap:12px}
+    label{display:block;font-size:13px;margin-bottom:6px;color:#333}
+    input[type=text], input[type=email], input[type=number], select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.08)}
+
+    /* responsive */
+    @media (max-width:900px){.grid{grid-template-columns:1fr}.cart{position:static}}
+
+    /* small helpers */
+    .muted{color:#666;font-size:13px}
+    .pill{background:rgba(0,0,0,0.05);padding:6px 8px;border-radius:999px;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>HotelBook — Book Hotels & Rooms</h1>
+        <div class="muted">Simple e‑commerce style hotel booking demo</div>
+      </div>
+      <div class="actions">
+        <div class="pill">Dark red theme</div>
+        <button class="btn" id="viewCart">View Booking</button>
+      </div>
+    </header>
+
+    <div class="search-panel">
+      <input id="search" placeholder="Search city or hotel name" />
+      <select id="guests"><option value="1">1 Guest</option><option>2 Guests</option><option>3 Guests</option><option>4 Guests</option></select>
+      <input id="checkin" type="date" />
+      <input id="checkout" type="date" />
+      <button class="btn" id="filterBtn">Search</button>
+    </div>
+
+    <div class="grid">
+      <div class="list" id="hotelsList">
+        <!-- Hotel cards will be injected -->
+      </div>
+
+      <aside class="cart" id="cart">
+        <h4>Your Booking</h4>
+        <div id="cartItems">No rooms added yet.</div>
+        <div class="total" id="cartTotal">Total: $0</div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn" id="checkoutBtn">Proceed to Checkout</button>
+          <button class="btn ghost" id="clearCart">Clear</button>
+        </div>
+      </aside>
+    </div>
+
+    <footer>Made with ❤️ — Demo project</footer>
+  </div>
+
+  <!-- Modal Booking Form -->
+  <div class="modal-backdrop" id="modal">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3 id="modalTitle">Book Room</h3>
+      <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <label>Full name</label>
+          <input id="fullname" type="text" placeholder="Your name" />
+        </div>
+        <div style="flex:1;min-width:220px">
+          <label>Email</label>
+          <input id="email" type="email" placeholder="you@example.com" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div style="flex:1">
+          <label>Check-in</label>
+          <input id="modalCheckin" type="date" />
+        </div>
+        <div style="flex:1">
+          <label>Check-out</label>
+          <input id="modalCheckout" type="date" />
+        </div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <div style="flex:1">
+          <label>Guests</label>
+          <select id="modalGuests"><option>1</option><option>2</option><option>3</option></select>
+        </div>
+        <div style="width:160px">
+          <label>Rooms</label>
+          <input id="modalRooms" type="number" min="1" value="1" />
+        </div>
+        <div style="width:140px">
+          <label>Price (per night)</label>
+          <div id="modalPrice" class="muted">$0</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn ghost" id="closeModal">Cancel</button>
+        <button class="btn" id="confirmBooking">Add to Booking</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /************* Sample data *************/
+    const hotels = [
+      {id:1,name:'Grand Palace Hotel',city:'Karachi',price:80,stars:5,image:'https://picsum.photos/seed/p1/400/300'},
+      {id:2,name:'Sea Breeze Resort',city:'Karachi',price:60,stars:4,image:'https://picsum.photos/seed/p2/400/300'},
+      {id:3,name:'Mountain View Inn',city:'Murree',price:50,stars:4,image:'https://picsum.photos/seed/p3/400/300'},
+      {id:4,name:'City Central Hotel',city:'Lahore',price:45,stars:3,image:'https://picsum.photos/seed/p4/400/300'},
+      {id:5,name:'Budget Stay',city:'Islamabad',price:30,stars:2,image:'https://picsum.photos/seed/p5/400/300'}
+    ];
+
+    /************* Simple app state *************/
+    let state = {
+      list: hotels,
+      cart: JSON.parse(localStorage.getItem('hb_cart') || '[]')
+    };
+
+    const $hotelsList = document.getElementById('hotelsList');
+    const $cartItems = document.getElementById('cartItems');
+    const $cartTotal = document.getElementById('cartTotal');
+
+    function renderHotels(list){
+      $hotelsList.innerHTML = '';
+      list.forEach(h => {
+        const card = document.createElement('div'); card.className='card';
+        card.innerHTML = `
+          <div class="thumb" style="background-image:url('${h.image}')"></div>
+          <div class="meta">
+            <h3>${h.name} <span class="muted">— ${h.city}</span></h3>
+            <div class="muted">${'★'.repeat(h.stars)} • Free cancellation</div>
+            <div class="price">$${h.price} / night</div>
+          </div>
+          <div class="book">
+            <button class="btn" data-id="${h.id}">Book</button>
+          </div>
+        `;
+        $hotelsList.appendChild(card);
+      });
+
+      // attach listeners
+      $hotelsList.querySelectorAll('button[data-id]').forEach(btn=>{
+        btn.addEventListener('click', (e)=>openModal(Number(btn.dataset.id)) );
+      });
+    }
+
+    function renderCart(){
+      if(state.cart.length===0){ $cartItems.textContent='No rooms added yet.'; $cartTotal.textContent='Total: $0'; return }
+      $cartItems.innerHTML='';
+      let total=0;
+      state.cart.forEach((it,idx)=>{
+        const div = document.createElement('div'); div.className='item';
+        div.innerHTML = `<div>${it.name} x${it.rooms} — ${it.nights} night(s)</div><div>$${it.lineTotal.toFixed(2)} <button data-idx="${idx}" style="margin-left:8px">Remove</button></div>`;
+        $cartItems.appendChild(div);
+      total += it.lineTotal;
+      });
+      $cartTotal.textContent = 'Total: $' + total.toFixed(2);
+
+      // remove handlers
+      $cartItems.querySelectorAll('button[data-idx]').forEach(b=>b.addEventListener('click', (e)=>{
+        const i = Number(b.dataset.idx); state.cart.splice(i,1); saveCart(); renderCart();
+      }));
+    }
+
+    function saveCart(){ localStorage.setItem('hb_cart', JSON.stringify(state.cart)) }
+
+    /************* Modal behavior *************/
+    const modal = document.getElementById('modal');
+    const closeModalBtn = document.getElementById('closeModal');
+    const confirmBookingBtn = document.getElementById('confirmBooking');
+
+    let currentHotel = null;
+
+    function openModal(hotelId){
+      currentHotel = hotels.find(h=>h.id===hotelId);
+      document.getElementById('modalTitle').textContent = 'Book — ' + currentHotel.name;
+      document.getElementById('modalPrice').textContent = '$' + currentHotel.price;
+      document.getElementById('modalCheckin').value = document.getElementById('checkin').value || '';
+      document.getElementById('modalCheckout').value = document.getElementById('checkout').value || '';
+      modal.style.display = 'flex';
+    }
+    function closeModal(){ modal.style.display='none' }
+    closeModalBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal() });
+
+    function parseDate(v){ return v ? new Date(v + 'T00:00:00') : null }
+    function daysBetween(a,b){ if(!a||!b) return 1; const diff = Math.ceil((b - a)/(1000*60*60*24)); return Math.max(1,diff); }
+
+    confirmBookingBtn.addEventListener('click', ()=>{
+      const name = document.getElementById('fullname').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const ci = parseDate(document.getElementById('modalCheckin').value);
+      const co = parseDate(document.getElementById('modalCheckout').value);
+      const guests = Number(document.getElementById('modalGuests').value);
+      const rooms = Number(document.getElementById('modalRooms').value) || 1;
+
+      if(!name || !email){ alert('Please provide name and email'); return }
+      const nights = daysBetween(ci,co);
+      const lineTotal = currentHotel.price * nights * rooms;
+
+      state.cart.push({ hotelId: currentHotel.id, name: currentHotel.name, nights, rooms, guests, lineTotal });
+      saveCart(); renderCart(); closeModal();
+      // clear modal inputs
+      document.getElementById('fullname').value=''; document.getElementById('email').value='';
+    });
+
+    /************* Filtering & Search *************/
+    document.getElementById('filterBtn').addEventListener('click', ()=>{
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const guests = document.getElementById('guests').value;
+      let filtered = hotels.filter(h => {
+        if(!q) return true;
+        return h.name.toLowerCase().includes(q) || h.city.toLowerCase().includes(q);
+      });
+      renderHotels(filtered);
+    });
+
+    // view cart button
+    document.getElementById('viewCart').addEventListener('click', ()=>{
+      // just scroll to cart
+      document.getElementById('cart').scrollIntoView({behavior:'smooth'});
+    });
+
+    document.getElementById('clearCart').addEventListener('click', ()=>{ state.cart=[]; saveCart(); renderCart(); });
+
+    document.getElementById('checkoutBtn').addEventListener('click', ()=>{
+      if(state.cart.length===0){ alert('Your booking is empty'); return }
+      // Mock checkout: show a simple summary/confirmation
+      let message = 'Confirm booking for:\n'; let total=0;
+      state.cart.forEach((it,i)=>{ message += `${i+1}. ${it.name} — ${it.rooms} room(s) x ${it.nights} night(s) = $${it.lineTotal.toFixed(2)}\n`; total+=it.lineTotal; });
+      message += '\nTotal: $' + total.toFixed(2) + '\n\n(Checkout simulated — no payments processed)';
+      if(confirm(message)){ state.cart=[]; saveCart(); renderCart(); alert('Booking confirmed — you will receive an email (simulated).') }
+    });
+
+    // initial render
+    renderHotels(hotels);
+    renderCart();
+
+    // seed default dates: today + 1
+    const today = new Date();
+    const dd = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const tomorrow = new Date(dd.getTime() + 24*60*60*1000);
+    document.getElementById('checkin').value = dd.toISOString().slice(0,10);
+    document.getElementById('checkout').value = tomorrow.toISOString().slice(0,10);
+
+  </script>
+</body>
+</html>
